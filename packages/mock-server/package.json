@@ -1,0 +1,27 @@
+{
+  "name": "@company-intelligence/mock-server",
+  "version": "0.0.0",
+  "description": "Fixture-backed mock Company Intelligence API.",
+  "license": "MIT",
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "types": "./src/index.ts",
+  "files": ["dist", "src"],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean",
+    "dev": "tsx src/dev.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint src --ext .ts",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@company-intelligence/fixtures": "workspace:*",
+    "@company-intelligence/provider": "workspace:*",
+    "@company-intelligence/types": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.5",
+    "tsx": "^4.19.2",
+    "vitest": "^2.1.8"
+  }
+}

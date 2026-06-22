@@ -1,0 +1,265 @@
+openapi: 3.1.0
+info:
+  title: Company Intelligence API
+  version: 1.0.0
+  description: >
+    Public contract for the private Company Intelligence service. Owns company identity
+    resolution, company/domain/market context signals, scoring-calibration hints, and source
+    provenance. Every non-trivial result carries `CompanyIntelligenceMetadata`
+    (sources[], retrievedAt, confidence, provider, warnings). Unknown / low-confidence
+    results are valid and must not invent claims.
+  license:
+    name: MIT
+servers:
+  - url: https://api.example.com
+    description: Placeholder; configure per deployment.
+security:
+  - bearerAuth: []
+  - {}
+paths:
+  /v1/health:
+    get:
+      operationId: getHealth
+      summary: Liveness/health.
+      security:
+        - {}
+      responses:
+        "200":
+          description: Health status.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompanyIntelligenceHealth" }
+  /v1/companies/resolve:
+    post:
+      operationId: resolveCompany
+      summary: Resolve a company name/domain to a canonical identity (unknown is valid).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CompanyResolveInput" }
+      responses:
+        "200":
+          description: Resolved identity + metadata.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompanyResolveResult" }
+  /v1/companies/intel:
+    post:
+      operationId: companyIntel
+      summary: Company signals + calibration hints.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CompanyIntelRequest" }
+      responses:
+        "200":
+          description: Company intelligence result.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CompanyIntelResult" }
+  /v1/domains/intel:
+    post:
+      operationId: domainIntel
+      summary: Domain/market context signals.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DomainIntelRequest" }
+      responses:
+        "200":
+          description: Domain intelligence result.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DomainIntelResult" }
+  /v1/context/application:
+    post:
+      operationId: applicationContext
+      summary: Combined application/preparation context (company + domain).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ApplicationContextRequest" }
+      responses:
+        "200":
+          description: Application context result.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ApplicationContextResult" }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    ConfidenceScore:
+      type: object
+      required: [value, band]
+      properties:
+        value: { type: number }
+        band: { type: string, enum: [high, medium, low, unknown] }
+    SourceProvenance:
+      type: object
+      required: [id, kind, retrievedAt, confidence]
+      properties:
+        id: { type: string }
+        kind: { type: string, enum: [official, third-party, derived, demo] }
+        title: { type: string }
+        url: { type: string }
+        retrievedAt: { type: string, format: date-time }
+        confidence: { $ref: "#/components/schemas/ConfidenceScore" }
+    CompanyIntelligenceMetadata:
+      type: object
+      required: [provider, degraded, engineVersion, retrievedAt, confidence, sources, warnings]
+      properties:
+        provider: { type: string }
+        degraded: { type: boolean }
+        engineVersion: { type: string }
+        retrievedAt: { type: string, format: date-time }
+        confidence: { $ref: "#/components/schemas/ConfidenceScore" }
+        sources:
+          type: array
+          items: { $ref: "#/components/schemas/SourceProvenance" }
+        warnings:
+          type: array
+          items: { type: string }
+        requestId: { type: string }
+    CompanyIntelligenceHealth:
+      type: object
+      required: [status, provider, engineVersion]
+      properties:
+        status: { type: string, enum: [ok, degraded, unavailable] }
+        provider: { type: string }
+        engineVersion: { type: string }
+    Signal:
+      type: object
+      required: [key, label, value, confidence]
+      properties:
+        key: { type: string }
+        label: { type: string }
+        value: { type: string }
+        confidence: { $ref: "#/components/schemas/ConfidenceScore" }
+        rationale: { type: string }
+    CalibrationHint:
+      type: object
+      required: [dimension, adjustment, rationale, confidence]
+      properties:
+        dimension: { type: string }
+        adjustment: { type: number }
+        rationale: { type: string }
+        confidence: { $ref: "#/components/schemas/ConfidenceScore" }
+    CompanyResolveInput:
+      type: object
+      properties:
+        name: { type: string }
+        domain: { type: string }
+        country: { type: string }
+        requestId: { type: string }
+    CompanyIdentity:
+      type: object
+      required: [id, canonicalName, aliases, resolved, confidence]
+      properties:
+        id: { type: string }
+        canonicalName: { type: string }
+        aliases:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              kind: { type: string, enum: [legal, brand, ticker, domain, former, other] }
+        domain: { type: string, nullable: true }
+        country: { type: string, nullable: true }
+        resolved: { type: boolean }
+        confidence: { $ref: "#/components/schemas/ConfidenceScore" }
+    CompanyResolveResult:
+      type: object
+      required: [identity, metadata]
+      properties:
+        identity: { $ref: "#/components/schemas/CompanyIdentity" }
+        metadata: { $ref: "#/components/schemas/CompanyIntelligenceMetadata" }
+    CompanyIntelRequest:
+      type: object
+      required: [company]
+      properties:
+        company: { $ref: "#/components/schemas/CompanyResolveInput" }
+        requestId: { type: string }
+    CompanyIntelResult:
+      type: object
+      required:
+        [identity, stage, archetype, operatingPace, businessModel, regulatedIndustry,
+         technicalProductDepth, signals, calibrationHints, metadata]
+      properties:
+        identity: { $ref: "#/components/schemas/CompanyIdentity" }
+        stage: { type: string }
+        archetype: { type: string }
+        operatingPace: { type: string }
+        businessModel: { type: string }
+        regulatedIndustry: { type: boolean }
+        technicalProductDepth: { type: string }
+        signals:
+          type: array
+          items: { $ref: "#/components/schemas/Signal" }
+        calibrationHints:
+          type: array
+          items: { $ref: "#/components/schemas/CalibrationHint" }
+        metadata: { $ref: "#/components/schemas/CompanyIntelligenceMetadata" }
+    DomainIntelRequest:
+      type: object
+      required: [domain]
+      properties:
+        domain: { type: string }
+        country: { type: string }
+        requestId: { type: string }
+    DomainIntelResult:
+      type: object
+      required: [domain, regulatedIndustry, signals, calibrationHints, metadata]
+      properties:
+        domain: { type: string }
+        country: { type: string, nullable: true }
+        regulatedIndustry: { type: boolean }
+        signals:
+          type: array
+          items: { $ref: "#/components/schemas/Signal" }
+        calibrationHints:
+          type: array
+          items: { $ref: "#/components/schemas/CalibrationHint" }
+        metadata: { $ref: "#/components/schemas/CompanyIntelligenceMetadata" }
+    ApplicationContextRequest:
+      type: object
+      properties:
+        company:
+          type: object
+          properties:
+            name: { type: string }
+            domain: { type: string }
+            country: { type: string }
+        domain: { type: string }
+        country: { type: string }
+        roleTitle: { type: string }
+        requestId: { type: string }
+    ApplicationContextResult:
+      type: object
+      required: [preparationInsights, resumeTailoringAngles, calibrationHints, metadata]
+      properties:
+        company:
+          oneOf:
+            - { $ref: "#/components/schemas/CompanyIntelResult" }
+            - { type: "null" }
+        domain:
+          oneOf:
+            - { $ref: "#/components/schemas/DomainIntelResult" }
+            - { type: "null" }
+        preparationInsights:
+          type: array
+          items: { type: string }
+        resumeTailoringAngles:
+          type: array
+          items: { type: string }
+        calibrationHints:
+          type: array
+          items: { $ref: "#/components/schemas/CalibrationHint" }
+        metadata: { $ref: "#/components/schemas/CompanyIntelligenceMetadata" }

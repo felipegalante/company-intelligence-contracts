@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022"],
+    "types": ["node"],
+
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+
+    "baseUrl": ".",
+    "paths": {
+      "@company-intelligence/types": ["packages/types/src/index.ts"],
+      "@company-intelligence/client": ["packages/client/src/index.ts"],
+      "@company-intelligence/provider": ["packages/provider/src/index.ts"],
+      "@company-intelligence/fixtures": ["packages/fixtures/src/index.ts"],
+      "@company-intelligence/mock-server": ["packages/mock-server/src/index.ts"],
+      "@company-intelligence/contract-tests": ["packages/contract-tests/src/index.ts"]
+    }
+  },
+  "exclude": ["node_modules", "dist", ".turbo", "coverage"]
+}
