@@ -1,12 +1,17 @@
 {
   "name": "@company-intelligence/types",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Stable, provider-neutral DTOs for Company Intelligence.",
   "license": "MIT",
   "type": "module",
-  "exports": { ".": "./src/index.ts" },
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "types": "./src/index.ts",
-  "files": ["dist", "src"],
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts --clean",
     "typecheck": "tsc -p tsconfig.json --noEmit",
@@ -16,5 +21,18 @@
   "devDependencies": {
     "tsup": "^8.3.5",
     "vitest": "^2.1.8"
+  },
+  "publishConfig": {
+    "access": "public",
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js",
+        "require": "./dist/index.cjs"
+      }
+    }
   }
 }
